@@ -116,10 +116,6 @@ def parallel_multiplication(
         rcounts = None
         displs = None
 
-    # Broadcast the scatter counts and displacements to all processes
-    rcounts = comm.bcast(rcounts if rank == 0 else None, root=0)
-    displs = comm.bcast(displs if rank == 0 else None, root=0)
-
     # Each process gets the number of rows it will handle
     M_part = np.array(0, dtype=np.int32)
     comm.Scatterv(
