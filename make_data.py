@@ -1,44 +1,66 @@
 import os
+import re
 
 import numpy as np
 
-matrix_A_size = (1500, 1000)
-vector_x_len = 1000
+matrix_size = (1500, 1000)
+vector_len = 1000
 
 
-def write_data_info(matrix_A_size=matrix_A_size, vector_x_len=vector_x_len):
-    # Writes info about data files in a file
+def write_data_info(filename, explanatory_line, data_info):
+    # Writes or updates if exist info about data files in a file
     os.makedirs("Data", exist_ok=True)
+
     try:
-        with open("Data/data_info.dat", "w") as file:
-            file.write(f"matrix_A_size={matrix_A_size}\nvector_x_len={vector_x_len}")
-    except FileNotFoundError as e:
-        print(f"Error writing to file {file}: {e}")
+        with open(filename, "r") as file:
+            content = file.readlines()
+    except FileNotFoundError:
+        content = []
+
+    line_exists = False
+    for i, line in enumerate(content):
+        if explanatory_line in line:
+            content[i] = f"{explanatory_line}{data_info}\n"
+            line_exists = True
+            break
+
+    if not line_exists:
+        content.append(f"{explanatory_line}{data_info}\n")
+
+    with open(filename, "w") as file:
+        file.writelines(content)
 
 
-def write_matrix_A_data(matrix_A_size=matrix_A_size):
+def write_matrix_data(filename, matrix_size: tuple):
     # Generate and write a random matrix to a file, one element per line
     os.makedirs("Data", exist_ok=True)
-    M, N = matrix_A_size
+    M, N = matrix_size
+
     try:
-        with open("Data/matrix_A.dat", "w") as file:
-            matrix_A = np.random.random_sample(matrix_A_size)
-            file.write("\n".join(map(str, matrix_A.reshape(M * N))))
+        with open(filename, "w") as file:
+            matrix = np.random.random_sample(matrix_size)
+            file.write("\n".join(map(str, matrix.reshape(M * N))))
     except FileNotFoundError as e:
         print(f"Error writing to file {file}: {e}")
 
 
-def write_vector_x_data(vector_x_len=vector_x_len):
+def write_vector_data(filename, vector_len):
     # Generate and write a random vector to a file, one element per line
     os.makedirs("Data", exist_ok=True)
     try:
-        with open("Data/vector_x.dat", "w") as file:
-            vector_x = np.random.random_sample(vector_x_len)
-            file.write("\n".join(map(str, vector_x)))
+        with open(filename, "w") as file:
+            vector = np.random.random_sample(vector_len)
+            file.write("\n".join(map(str, vector)))
     except FileNotFoundError as e:
         print(f"Error writing to file {file}: {e}")
 
 
-write_data_info(matrix_A_size=matrix_A_size, vector_x_len=vector_x_len)
-write_matrix_A_data(matrix_A_size=matrix_A_size)
-write_vector_x_data(vector_x_len=vector_x_len)
+# write_data_info(filename='Data/data_info.dat', explanatory_line='matrix_A_size=', data_info=matrix_size)
+# write_matrix_data(filename='Data/matrix_A.dat', matrix_size=matrix_size)
+
+write_data_info(
+    filename="Data/data_info.dat",
+    explanatory_line="vector_y_len=",
+    data_info=vector_len,
+)
+write_vector_data(filename="Data/vector_y.dat", vector_len=vector_len)
