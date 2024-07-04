@@ -4,7 +4,7 @@ import re
 import numpy as np
 
 matrix_size = (1500, 1000)
-vector_len = 1000
+vector_len = 1500
 
 
 def write_data_info(filename, explanatory_line, data_info):
@@ -58,9 +58,24 @@ def write_vector_data(filename, vector_len):
 # write_data_info(filename='Data/data_info.dat', explanatory_line='matrix_A_size=', data_info=matrix_size)
 # write_matrix_data(filename='Data/matrix_A.dat', matrix_size=matrix_size)
 
+"""
 write_data_info(
     filename="Data/data_info.dat",
     explanatory_line="vector_y_len=",
     data_info=vector_len,
 )
 write_vector_data(filename="Data/vector_y.dat", vector_len=vector_len)
+"""
+write_data_info(
+    filename="Data/data_info.dat",
+    explanatory_line="matrix_A_size=",
+    data_info=matrix_size,
+)
+write_matrix_data(filename="Data/matrix_A.dat", matrix_size=matrix_size)
+
+write_data_info(
+    filename="Data/data_info.dat",
+    explanatory_line="vector_x_len=",
+    data_info=vector_len,
+)
+write_vector_data(filename="Data/vector_x.dat", vector_len=vector_len)
