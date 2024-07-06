@@ -135,9 +135,6 @@ def parallel_multiplication(
         A_part = np.empty((M_part, N), dtype=np.float64)
         comm.Recv([A_part, MPI.DOUBLE], source=0, tag=0)
 
-    if rank == 0:
-        A_part = matrix_A[displs[rank] : displs[rank] + rcounts[rank], :]
-
     # Allocate space for the vector x
     vector_x = np.empty(vector_x_len, dtype=np.float64)
 
