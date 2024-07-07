@@ -62,7 +62,7 @@ def write_sine_data(matrix_filename, vector_filename, matrix_size):
     M, N = matrix_size
     matrix = np.random.random_sample(matrix_size)
     t = np.linspace(0, 1, N, endpoint=False)
-    sin = np.sin(2 * np.pi * N * t)
+    sin = np.sin(2 * np.pi * t)
     vector = np.dot(matrix, sin)
 
     try:

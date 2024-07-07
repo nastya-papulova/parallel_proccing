@@ -1,6 +1,7 @@
 import re
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 from mpi4py import MPI
 
@@ -262,3 +263,7 @@ if rank == 0:
 
     print(f"Sequential conjugate gradient method time: {end_time - start_time} seconds")
     print(np.allclose(x_parallel, x_sequential))
+
+    plt.plot(x_parallel)
+    plt.plot(x_sequential)
+    plt.show()
