@@ -3,44 +3,56 @@ import time
 
 import numpy as np
 from mpi4py import MPI
-from scipy.sparse.linalg import cg
 
 
 def read_data_info(filename):
     """
-    Reads the size of matrix A and the length of vector x from a data file.
+    Reads the size of matrix A and the length of vector b from a data file.
+    Vector b is read from document vector_x.dat
 
     Parameters:
     filename (str): The path to the data file.
 
     Returns:
-    tuple: A tuple of two integers containing the size of matrix A and the integer length of vector x.
+    tuple: A tuple of two integers containing the size of matrix A and the integer length of vector b.
 
     Raises:
-    ValueError: If vector and matrix cannot be multiplied due to incorrect dimensions.
+    ValueError: If there is no solution to SLAE due to incorrect vector and matrix dimensions.
     ValueError: If the expected data format is not found in the file.
     """
     with open(filename, "r") as file:
         content = file.read()
 
     matrix_A_size_match = re.search(r"matrix_A_size\s*=\s*\((\d+),\s*(\d+)\)", content)
-    vector_x_len_match = re.search(r"vector_x_len\s*=\s*(\d+)", content)
+    vector_b_len_match = re.search(r"vector_x_len\s*=\s*(\d+)", content)
 
-    if matrix_A_size_match and vector_x_len_match:
+    if matrix_A_size_match and vector_b_len_match:
         matrix_A_size = (
             int(matrix_A_size_match.group(1)),
             int(matrix_A_size_match.group(2)),
         )
-        vector_x_len = int(vector_x_len_match.group(1))
-        if vector_x_len != matrix_A_size[1]:
+        vector_b_len = int(vector_b_len_match.group(1))
+        if vector_b_len != matrix_A_size[1]:
             raise ValueError(
-                "Vector and matrix cannot be multiplied due to incorrect dimensions."
+                "If there is no solution to SLAE due to incorrect vector and matrix dimensions."
             )
 
-        return matrix_A_size, vector_x_len
+        return matrix_A_size, vector_b_len
 
 
 def sequential_calculation_conjugate_gradient_method(A, b, x, N):
+    """
+    Calculates solving SLAE Ax=b using the conjugate gradient method
+
+    Parameters:
+    A (np.ndarray): Matrix A.
+    b (np.ndarray): Vector b.
+    x (np.ndarray): Initial approximation of vector x.
+    N (int): The lenth of vectors x and b.
+
+    Returns:
+    np.ndarray: The resulting vector x of SLAE solution.
+    """
     s = 1
     p = np.zeros(N)
 
@@ -64,15 +76,16 @@ def sequential_conjugate_gradient_method(
 ):
     """
     Performs regular (sequential) conjugate gradient method for solving SLAEs.
+    Vector b is read from document vector_x.dat
 
     Parameters:
     matrix_A_size (tuple): The size of matrix A.
-    vector_x_len (int): The length of vector x.
+    vector_b_len (int): The length of vector b.
     matrix_A_data_filename (str): The filename containing the data for matrix A.
-    vector_x_data_filename (str): The filename containing the data for vector x.
+    vector_b_data_filename (str): The filename containing the data for vector b.
 
     Returns:
-    np.ndarray: The resulting vector of SLAE solution.
+    np.ndarray: The resulting vector x of SLAE solution.
     """
     M, N = matrix_A_size
     matrix_A = np.loadtxt(matrix_A_data_filename).reshape(matrix_A_size)
@@ -85,6 +98,18 @@ def sequential_conjugate_gradient_method(
 
 
 def auxiliary_arrays_determination(M, numprocs):
+    """
+    Prepares calculations for dividing the array by processes for the general case
+    (the number of elements is not divisible by the number of processes)
+
+    Parameters:
+    M (int): The size of array.
+    numprocs (int): The number of processes.
+
+    Returns:
+    np.ndarray: rcounts - stores the lengths of parts of the array on each process.
+    np.ndarray: displs - stores the indexes of the first elements.
+    """
     displs = np.empty(numprocs, dtype=np.int32)
     rcounts = np.empty(numprocs, dtype=np.int32)
     displs[0] = 0
@@ -97,6 +122,18 @@ def auxiliary_arrays_determination(M, numprocs):
 
 
 def parallel_calculation_conjugate_gradient_method(A_part, b_part, x, N):
+    """
+    Numerical solution of systems of equations Ax = b by the conjugate gradient method for the case of a parallel program
+
+    Parameters:
+    A_part (np.ndarray): Part of matrix A on a current process.
+    b_part (np.ndarray): Part of vecotr x on a current process.
+    x (np.ndarray): Initial approximation of vector x.
+    N (int): The lenth of vectors x and b.
+
+    Returns:
+    np.ndarray: The resulting vector x of SLAE solution.
+    """
     r = np.empty(N, dtype=np.float64)
     q = np.empty(N, dtype=np.float64)
 
@@ -119,9 +156,6 @@ def parallel_calculation_conjugate_gradient_method(A_part, b_part, x, N):
 
 
 def parallel_conjugate_gradient_method(
-    comm,
-    numprocs,
-    rank,
     matrix_A_size,
     vector_b_len,
     matrix_A_data_filename,
@@ -131,9 +165,6 @@ def parallel_conjugate_gradient_method(
     Performs parallel conjugate gradient method for solving SLAEs.
 
     Parameters:
-    comm (MPI.Comm): The MPI communicator.
-    numprocs (int): The number of processes.
-    rank (int): The rank of the current process.
     matrix_A_size (tuple): The size of matrix A.
     vector_b_len (int): The length of vector b.
     matrix_A_data_filename (str): The filename containing the data for matrix A.
@@ -209,9 +240,6 @@ rank = comm.Get_rank()
 start_time = time.time()
 
 x_parallel = parallel_conjugate_gradient_method(
-    comm,
-    numprocs,
-    rank,
     matrix_A_size,
     vector_b_len,
     matrix_A_data_filename,
@@ -220,18 +248,17 @@ x_parallel = parallel_conjugate_gradient_method(
 end_time = time.time()
 
 if rank == 0:
+
     print(f"Parallel conjugate gradient method time: {end_time - start_time} seconds")
 
+    start_time = time.time()
 
-start_time = time.time()
+    x_sequential = sequential_conjugate_gradient_method(
+        matrix_A_size,
+        matrix_A_data_filename,
+        vector_b_data_filename,
+    )
+    end_time = time.time()
 
-x_sequential = sequential_conjugate_gradient_method(
-    matrix_A_size,
-    matrix_A_data_filename,
-    vector_b_data_filename,
-)
-end_time = time.time()
-
-if rank == 0:
     print(f"Sequential conjugate gradient method time: {end_time - start_time} seconds")
     print(np.allclose(x_parallel, x_sequential))
