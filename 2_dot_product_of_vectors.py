@@ -61,9 +61,6 @@ def sequential_dot_product(vector_len, vector_x_data_filename, vector_y_data_fil
 
 
 def parallel_dot_product(
-    comm,
-    numprocs,
-    rank,
     vector_len,
     vector_x_data_filename,
     vector_y_data_filename,
@@ -72,9 +69,6 @@ def parallel_dot_product(
     Performs parallel dot product of vectors using MPI.
 
     Parameters:
-    comm (MPI.Comm): The MPI communicator.
-    numprocs (int): The number of processes.
-    rank (int): The rank of the current process.
     vector_len (int): The length of vectors.
     vector_x_data_filename (str): The filename containing the data for vector x.
     vector_y_data_filename (str): The filename containing the data for vector y.
@@ -154,9 +148,6 @@ rank = comm.Get_rank()
 start_time = time.time()
 
 b_parallel = parallel_dot_product(
-    comm,
-    numprocs,
-    rank,
     vector_len=vector_len,
     vector_x_data_filename=vector_x_data_filename,
     vector_y_data_filename=vector_y_data_filename,
@@ -166,16 +157,14 @@ end_time = time.time()
 if rank == 0:
     print(f"Parallel dot product time: {end_time - start_time} seconds")
 
+    start_time = time.time()
 
-start_time = time.time()
+    b_sequential = sequential_dot_product(
+        vector_len=vector_len,
+        vector_x_data_filename=vector_x_data_filename,
+        vector_y_data_filename=vector_y_data_filename,
+    )
+    end_time = time.time()
 
-b_sequential = sequential_dot_product(
-    vector_len=vector_len,
-    vector_x_data_filename=vector_x_data_filename,
-    vector_y_data_filename=vector_y_data_filename,
-)
-end_time = time.time()
-
-if rank == 0:
     print(f"Sequential multiplication time: {end_time - start_time} seconds")
     print(np.allclose(b_parallel, b_sequential))

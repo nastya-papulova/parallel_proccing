@@ -70,9 +70,6 @@ def sequential_multiplication(
 
 
 def parallel_multiplication(
-    comm,
-    numprocs,
-    rank,
     matrix_A_size,
     vector_x_len,
     matrix_A_data_filename,
@@ -82,9 +79,6 @@ def parallel_multiplication(
     Performs parallel transposed matrix-vector multiplication using MPI.
 
     Parameters:
-    comm (MPI.Comm): The MPI communicator.
-    numprocs (int): The number of processes.
-    rank (int): The rank of the current process.
     matrix_A_size (tuple): The size of matrix A.
     vector_x_len (int): The length of vector x.
     matrix_A_data_filename (str): The filename containing the data for matrix A.
@@ -177,9 +171,6 @@ rank = comm.Get_rank()
 start_time = time.time()
 
 b_parallel = parallel_multiplication(
-    comm,
-    numprocs,
-    rank,
     matrix_A_size,
     vector_x_len,
     matrix_A_data_filename,
@@ -190,17 +181,15 @@ end_time = time.time()
 if rank == 0:
     print(f"Parallel multiplication time: {end_time - start_time} seconds")
 
+    start_time = time.time()
 
-start_time = time.time()
+    b_sequential = sequential_multiplication(
+        matrix_A_size,
+        vector_x_len,
+        matrix_A_data_filename,
+        vector_x_data_filename,
+    )
+    end_time = time.time()
 
-b_sequential = sequential_multiplication(
-    matrix_A_size,
-    vector_x_len,
-    matrix_A_data_filename,
-    vector_x_data_filename,
-)
-end_time = time.time()
-
-if rank == 0:
     print(f"Sequential multiplication time: {end_time - start_time} seconds")
     print(np.allclose(b_parallel, b_sequential))
